@@ -1,0 +1,124 @@
+raku
+====
+
+A studio for firing concept-guided prompts onto frozen vision-language towers so
+that low-prevalence fundus diseases can be read from a handful of examples. The
+package carries the three working parts described in our manuscript:
+
+  - a hierarchical concept decomposition that grounds anatomy, pathology and
+    severity terms against one another with graph attention;
+  - an adaptive prompt synthesis network that turns a fundus image into one
+    instance-specific prompt token through cross-modal attention and a gate;
+  - an interpretable prediction calibration that blends the predicted
+    probability with a concept-consistency score and reports the activated
+    concepts behind every call.
+
+The trainable head sits on top of a frozen BiomedCLIP ViT-B/16 vision tower and
+a frozen PubMedBERT text tower. When the hub weights are not reachable a
+deterministic stand-in keeps the token shapes intact, so the pipeline and the
+test suite run with no network.
+
+Layout
+------
+
+  benchtops/      bench sheets (TOML) — one per reported run
+  src/raku/
+    slip/         concept vocabulary and concept-disease grounding
+    wedging/      datasets, augmentation, K-shot sampling
+    wheel/        encoders, decomposition, synthesis, calibration, export
+    kiln/         focal + alignment + consistency objective
+    calipers/     AUC, F1, kappa, calibration error, bootstrap, DeLong, Fleiss
+    firing/       optimiser, schedule, EMA, trainer, lambda annealing
+    sorting/      evaluation, few-shot driver, single-image readout
+    bench/        settings, seeding, logging, atomic checkpoints, process group
+    wheelhead/    command surface (throw / grade / read / cast)
+  kickwheel/      shell entry points
+  trials/         test suite
+  clay-beds.txt   dataset access points and licences
+
+Installation
+------------
+
+pip:
+
+    python -m pip install -r requirements.txt
+    python -m pip install -e .
+
+conda:
+
+    conda env create -f environment.yml
+    conda activate raku
+    python -m pip install -e .
+
+docker:
+
+    docker build -t raku .
+    docker run --gpus all raku grade benchtops/kiln/main.toml firings/odir5k_main/final.pt
+
+Data
+----
+
+Access points and licences live in clay-beds.txt. Place each collection under
+data/<dataset>/ with per-split CSV manifests (one row of
+"relative/path.jpg,01001000", the second field a 0/1 string of length
+num_classes or a space-separated list of positive indices), then run
+kickwheel/prepare_data.sh to create the folders.
+
+  ODIR-5K     5,000 patients, 8 labels        https://odir2019.grand-challenge.org/
+              registration on Grand Challenge; challenge train/test split.
+  RFMiD       3,200 images, 46 conditions      ieee-dataport.org (CC BY 4.0)
+              1,920 / 640 / 640 split; the released concept map covers the
+              highlighted low-prevalence categories.
+  JSIEC-1000  1,000 images, 39 categories      kaggle.com/datasets/linchundan/fundusimage1000
+              free for any purpose; concept map covers the highlighted classes.
+
+Record the SHA-256 of each manifest after download; the loader reads the CSV
+verbatim and never rewrites it.
+
+Training
+--------
+
+Single command per reported run; override CONFIG to point at any bench sheet.
+
+    bash kickwheel/launch_train.sh                                  # ODIR-5K full data
+    CONFIG=benchtops/kiln/main_rfmid.toml bash kickwheel/launch_train.sh
+    CONFIG=benchtops/kiln/main_jsiec.toml bash kickwheel/launch_train.sh
+    CONFIG=benchtops/kiln/fewshot_k5.toml bash kickwheel/launch_train.sh
+
+The component sheets ablation_*.toml reproduce Table 4, the supplementary_*.toml
+sheets sweep prompt length, graph-attention depth, cross-modal heads and the
+loss weights. Lambda is fixed after training by minimising calibration error on
+the validation split.
+
+Evaluation
+----------
+
+    bash kickwheel/launch_eval.sh
+    python -m raku.wheelhead.console read benchtops/kiln/main.toml firings/odir5k_main/final.pt path/to/image.jpg
+    python -m raku.wheelhead.console cast benchtops/kiln/main.toml firings/odir5k_main/final.pt head.onnx
+
+Expected headline numbers (full-data, percentage points unless noted):
+
+    ODIR-5K      AUC 94.87 +/- 0.3   F1 89.34 +/- 0.4   kappa 0.842
+    RFMiD        AUC 92.76 +/- 0.4   F1 84.58 +/- 0.5
+    JSIEC-1000   AUC 90.42 +/- 0.5   F1 81.35 +/- 0.5
+    ODIR-5K 5-shot (5 seeds)         AUC 88.73 +/- 0.8   F1 78.56 +/- 0.9
+    ODIR-5K calibration              ECE 5.48            MCE 12.35
+
+Few-shot rows report mean and standard deviation over seeds 0, 1, 2, 42, 2024.
+
+Compute budget
+--------------
+
+Reported runs used a cluster node with 4x NVIDIA A100 80GB GPUs, an AMD EPYC
+7742 64-core processor and 512GB RAM, on Ubuntu 20.04, CUDA 11.8, cuDNN 8.6,
+Python 3.10, PyTorch 2.1.0 and Transformers 4.35.0. Mini-batch 32 (8 per few-shot
+run), AdamW at 1e-4 with weight decay 0.01, cosine annealing with a 5-epoch
+warmup over 100 epochs, fp32. The effective batch is 128 (32 x 4). Full-data
+training takes roughly 2.3 hours; inference is about 18.7 ms per image.
+
+Checkpoints
+-----------
+
+Trained weights are available upon reasonable request. Released archives will
+carry a SHA-256 manifest alongside the bench sheet used to produce them.

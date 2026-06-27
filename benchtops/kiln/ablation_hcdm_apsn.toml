@@ -1,0 +1,19 @@
+# Table 4 component ablation (ODIR-5K, 5-shot): HCDM=true APSN=true IPC=false
+[body]
+image_size = 224
+offline_backbone = false
+use_hcdm = true
+use_apsn = true
+use_ipc = false
+[seam]
+dataset = "odir5k"
+root = "data/odir5k"
+num_classes = 8
+shots = 5
+batch_size = 8
+[kiln]
+epochs = 100
+seed = 0
+[station]
+world_size = 4
+out_dir = "firings/ablation_hcdm_apsn"

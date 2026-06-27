@@ -1,0 +1,16 @@
+# Table 2 few-shot (ODIR-5K, 2-shot)
+[body]
+image_size = 224
+offline_backbone = false
+[seam]
+dataset = "odir5k"
+root = "data/odir5k"
+num_classes = 8
+shots = 2
+batch_size = 8
+[kiln]
+epochs = 100
+seed = 0
+[station]
+world_size = 4
+out_dir = "firings/fewshot_k2"

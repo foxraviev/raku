@@ -1,0 +1,54 @@
+# ODIR-5K full-data run — Table 1 headline result.
+# Effective batch = batch_size * world_size = 32 * 4 = 128.
+
+[body]
+embed_dim = 512
+prompt_len = 16
+n_anatomical = 12
+n_pathological = 45
+n_severity = 9
+gat_layers = 2
+gat_heads = 4
+xmodal_heads = 8
+ffn_hidden = 2048
+dropout = 0.1
+tau_learn_init = 14.3
+tau_alpha = 0.1
+lambda_init = 0.7
+image_size = 224
+patch = 16
+offline_backbone = false
+use_hcdm = true
+use_apsn = true
+use_ipc = true
+
+[seam]
+dataset = "odir5k"
+root = "data/odir5k"
+num_classes = 8
+shots = 0
+batch_size = 32
+num_workers = 8
+
+[kiln]
+optimizer = "adamw"
+lr = 1e-4
+weight_decay = 0.01
+scheduler = "cosine"
+warmup_epochs = 5
+epochs = 100
+grad_clip = 1.0
+focal_gamma = 2.0
+beta_align = 0.5
+beta_consist = 0.1
+amp = false
+seed = 0
+
+[station]
+world_size = 4
+out_dir = "firings/odir5k_main"
+log_every = 20
+ckpt_every = 5
+eval_seeds = [0, 1, 2, 42, 2024]
+threshold = 0.5
+calibrate_lambda = true

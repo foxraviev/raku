@@ -1,0 +1,26 @@
+# for unit-test smoke only; do not use for reporting
+[body]
+image_size = 32
+patch = 16
+ffn_hidden = 64
+offline_backbone = true
+
+[seam]
+dataset = "odir5k"
+root = "data/_none"
+num_classes = 8
+batch_size = 4
+num_workers = 0
+
+[kiln]
+epochs = 1
+warmup_epochs = 0
+lr = 5e-3
+seed = 0
+
+[station]
+world_size = 1
+out_dir = "firings/_bench"
+log_every = 1
+ckpt_every = 1
+eval_seeds = [0]

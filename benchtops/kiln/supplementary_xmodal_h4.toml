@@ -1,0 +1,17 @@
+# Table 17 cross-modal attention heads (ODIR-5K, 5-shot): heads=4
+[body]
+image_size = 224
+offline_backbone = false
+xmodal_heads = 4
+[seam]
+dataset = "odir5k"
+root = "data/odir5k"
+num_classes = 8
+shots = 5
+batch_size = 8
+[kiln]
+epochs = 100
+seed = 0
+[station]
+world_size = 4
+out_dir = "firings/xmodal_h4"

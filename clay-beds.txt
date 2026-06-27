@@ -1,0 +1,37 @@
+raku — fundus image sources
+verified 2025
+
+Three public ophthalmic collections drive every reported number. Each entry
+records the working access point and the licence under which the images are
+released. All three carry multi-label annotations, which is what the
+concept-alignment loss consumes.
+
+[ODIR-5K]
+  name     : Ocular Disease Intelligent Recognition 5K
+  patients : 5,000 (10,000 colour fundus photographs, both eyes)
+  classes  : 8 labels (Normal, Diabetes, Glaucoma, Cataract, AMD,
+             Hypertension, Pathological Myopia, Other)
+  split    : 3,500 train patients / 1,500 test patients (challenge split)
+  access   : https://odir2019.grand-challenge.org/
+  licence  : research use, registration on Grand Challenge required
+
+[RFMiD]
+  name     : Retinal Fundus Multi-disease Image Dataset
+  images   : 3,200 (1,920 train / 640 val / 640 test)
+  classes  : 46 conditions, multi-label
+  access   : https://ieee-dataport.org/open-access/retinal-fundus-multi-disease-image-dataset-rfmid
+  mirror   : https://riadd.grand-challenge.org/
+  licence  : CC BY 4.0 (Data 2021, 6(2):14)
+
+[JSIEC-1000]
+  name     : Jin Shan International Eye Centre 1000
+  images   : 1,000 fundus photographs across 39 categories
+  access   : https://www.kaggle.com/datasets/linchundan/fundusimage1000
+  mirror   : https://zenodo.org/record/3477553 (doi:10.5281/zenodo.3477553)
+  licence  : free for any purpose (author statement)
+
+Frozen backbone weights (BiomedCLIP ViT-B/16 + PubMedBERT) are pulled at
+runtime from the Hugging Face hub identifier
+microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224 when network access is
+available; otherwise a deterministic seeded stand-in keeps shapes intact for
+offline runs and the test suite.
